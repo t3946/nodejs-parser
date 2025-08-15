@@ -5,9 +5,10 @@
         "module": "esnext",
         "moduleResolution": "node",
         "strict": true,
-        "baseUrl": ".",
+        "baseUrl": "./src",
         "paths": {
-            "@/*": ["src/*"]
-        }
+            "@/*": ["*"]
+        },
+        "allowSyntheticDefaultImports": true
     }
 }

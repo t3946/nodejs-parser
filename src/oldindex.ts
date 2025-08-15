@@ -1,9 +1,10 @@
+import {fetchProxies} from "@/utils";
+
 const puppeteer = require('puppeteer');
 const useProxy = require('@lem0-packages/puppeteer-page-proxy');
 
 (async () => {
-    const resp = await fetch("https://api.proxytraff.com/package/get?c=K5hk");
-    const proxies = (await resp.text()).split('\n');
+    const proxies = await fetchProxies()
     const browser = await puppeteer.launch({
         ignoreHTTPSErrors: true,
         headless: false,
@@ -33,7 +34,7 @@ const useProxy = require('@lem0-packages/puppeteer-page-proxy');
             try {
                 page
                     .goto('https://2ip.ru/', { timeout: 0, waitUntil: 'load' })
-                    .catch((err) => {
+                    .catch((err : any) => {
                         console.error('Общая ошибка на итерации с прокси', proxy, err);
                     })
                 console.log(`Прокси ${proxy} успешно открыт URL`);
