@@ -2,11 +2,11 @@ const path = require('path');
 
 module.exports = {
     entry: path.resolve(__dirname, 'src/index.ts'), // входной файл
+    target: 'node',
     output: {
         path: path.resolve(__dirname, 'dist'), // каталог для сборки
         filename: 'index.js', // имя выходного файла
         library: {
-            name: 'ParserNodeJS', // имя библиотеки
             type: 'module', // формат ES-модуль
         },
         clean: true, // очищать папку dist перед сборкой (аналог emptyOutDir)

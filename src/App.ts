@@ -1,4 +1,4 @@
-import {Browser} from "@/Browser";
+import {Browser} from "./Browser";
 
 export class App {
     public static async main() {

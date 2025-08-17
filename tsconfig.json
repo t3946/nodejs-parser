@@ -9,6 +9,13 @@
         "paths": {
             "@/*": ["*"]
         },
-        "allowSyntheticDefaultImports": true
+        "allowSyntheticDefaultImports": true,
+        "outDir": "./dist",
+        "rootDir": "./src"
+    },
+    "include": ["src/**/*"],
+    "ts-node": {
+        "esm": true,
+        "experimentalSpecifierResolution": "node"
     }
 }
