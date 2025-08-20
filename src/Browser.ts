@@ -17,7 +17,7 @@ export class Browser {
         this.browser = await puppeteer.launch(this.options);
     }
 
-    async openPage(url: string, proxy?: string) {
+    async openPage(url: string, proxy?: string, callback?: (err: Error | null, page?: Page | null) => void): Promise<{error: Error | null, page: Page | null}> {
         if (!this.browser) {
             throw new Error("Browser does not ready");
         }
@@ -39,13 +39,19 @@ export class Browser {
         try {
             const timeoutS = 30
 
-            page
-                .goto(url, { timeout: 1000 * timeoutS, waitUntil: 'load' })
+            await page
+                .goto(url, {timeout: 1000 * timeoutS, waitUntil: 'load'})
                 .catch((err) => {
                     console.error('Общая ошибка на итерации с прокси', proxy, err)
                 })
-        } catch (navError) {
+
+            callback && callback(null, page)
+
+            return {error: null, page}
+        } catch (navError: any) {
             console.error(`Ошибка навигации с прокси ${proxy}:`, navError)
+            callback && callback(navError, null)
+            return {error: navError, page: null}
         }
     }
 }
