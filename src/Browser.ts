@@ -2,7 +2,7 @@ import puppeteer, {Browser as PuppeteerBrowser, Page, PuppeteerLaunchOptions} fr
 import useProxy from "@lem0-packages/puppeteer-page-proxy";
 
 export class Browser {
-    private browser: PuppeteerBrowser | undefined;
+    public browser: PuppeteerBrowser | undefined;
     private options: PuppeteerLaunchOptions;
 
     constructor(options: PuppeteerLaunchOptions = {}) {
@@ -17,41 +17,20 @@ export class Browser {
         this.browser = await puppeteer.launch(this.options);
     }
 
-    async openPage(url: string, proxy?: string, callback?: (err: Error | null, page?: Page | null) => void): Promise<{error: Error | null, page: Page | null}> {
+    async newPage(proxy?: string): Promise<Page> {
         if (!this.browser) {
             throw new Error("Browser does not ready");
         }
 
         const page = await this.browser.newPage();
 
-        // handle unexpected page close
-        page.on('close', () => {
-            console.warn('Страница закрылась, но мы не закрываем весь браузер')
-        })
-
         if (proxy) {
             await useProxy(page, `http://${proxy}`)
         }
 
         // disable timeout
-        await page.setDefaultNavigationTimeout(0);
+        await page.setDefaultNavigationTimeout(2000);
 
-        try {
-            const timeoutS = 30
-
-            await page
-                .goto(url, {timeout: 1000 * timeoutS, waitUntil: 'load'})
-                .catch((err) => {
-                    console.error('Общая ошибка на итерации с прокси', proxy, err)
-                })
-
-            callback && callback(null, page)
-
-            return {error: null, page}
-        } catch (navError: any) {
-            console.error(`Ошибка навигации с прокси ${proxy}:`, navError)
-            callback && callback(navError, null)
-            return {error: navError, page: null}
-        }
+        return page
     }
 }

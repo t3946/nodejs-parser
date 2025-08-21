@@ -3,9 +3,17 @@ import {Page} from "puppeteer";
 import {CaptchaSolver} from "@/captcha/CaptchaSolver";
 import {KeywordsQueue} from "@/KeywordsQueue";
 import {Log} from "@/Log";
+import {FailureParseError} from "@/exception/FailureParseError";
+
+type TPosition = {
+    url: string
+    position: number
+}
 
 export class App {
     private static maxPage = 1
+    private static timeoutS = 2
+    private static headless: boolean = false;
 
     private static getPageUrl(keyword: string, pageNumber: number): string {
         const baseUrl = 'https://yandex.ru/search/';
@@ -24,51 +32,116 @@ export class App {
         return url.toString();
     }
 
-    private static async parseKeyword(browser: Browser, keyword: string) {
-        const {error, page: pageAwait} = await browser.newPage()
+    private static async parsePage(page: Page, pageNumber: number): Promise<TPosition[]> {
+        Log.todo('Here is shall be page parsing')
+
+        return []
+    }
+
+    /**
+     * @throws Error
+     */
+    private static async parseKeyword(browser: Browser, keyword: string, proxy?: string): Promise<TPosition[]> {
+        Log.info('Parse keyword: ' + keyword);
+
+        const page = await browser.newPage(proxy)
+        const allReports: TPosition[] = []
 
         for (let pageNumber = 1; pageNumber <= App.maxPage; pageNumber++) {
-            const pageUrl = App.getPageUrl(keyword, pageNumber)
+            Log.system('Parse page: ' + pageNumber);
 
-            if (error) {
-                Log.error('Can not open page', {error})
-                throw error
-            }
+            //[start] load page
+            const url = App.getPageUrl(keyword, pageNumber)
 
-            const page = pageAwait as Page
+            await page
+                .goto(url, {
+                    timeout: 1000 * App.timeoutS,
+                    waitUntil: 'load',
+                })
+                .catch(async () => {
+                    await page.close()
+                    throw new FailureParseError('Failure parse')
+                })
+
             const captchaSolver = new CaptchaSolver(page)
-
-            const solved =captchaSolver.solveCaptcha()
+            const solved = await captchaSolver.solveCaptcha()
 
             if (!solved) {
                 Log.warn('Captcha not solved')
-            }
 
-            Log.todo('Here is shall be page parsing')
+                throw new FailureParseError('Failure parse')
+            }
+            //[end]
+
+
+            //parse loaded results
+            const pageReports = await App.parsePage(page, pageNumber)
+
+            allReports.push(...pageReports)
         }
-        page.close()
+
+        await page.close()
+
+        return allReports
     }
 
     public static async main(keywords: string[]) {
-        //[start] start browser
+        Log.info('Parsing begin:')
+
+
+        //start browser
         const browser = new Browser({
-            headless: false,
+            headless: App.headless,
         });
 
-        await browser.launch();
-        browser.newPage()
-        browser.newPage()
-        browser.newPage()
-        return
-        //[end]
-
+        await browser.launch()
 
         const keywordsQueue = new KeywordsQueue(keywords)
-        const maxTabs = 3
-        const parsed = []
+        const processingMax = 3
+        const parsed: { word: string, positions: TPosition[] }[] = []
+        let processingKeywords = 0
 
-        while (parsed.length < keywords.length) {
-            App.parseKeyword(browser, )
-        }
+
+        const interval = setInterval(() => {
+
+            const word = keywordsQueue.take()
+
+            //all parsed
+            if (parsed.length === keywords.length) {
+                Log.info('Parsing completed!', parsed)
+                clearInterval(interval)
+                return
+            }
+
+            //@ts-ignore
+            if (!browser.browser.connected) {
+                Log.error('Browser was closed. Parsing abort.')
+                clearInterval(interval)
+                return
+            }
+
+            if (
+                !word ||
+                processingKeywords === processingMax
+            ) {
+                return
+            }
+
+            processingKeywords++
+
+            App.parseKeyword(browser, word)
+                .then((positions) => {
+                    parsed.push({word, positions})
+                })
+                .catch((err) => {
+                    if (err instanceof FailureParseError) {
+                        keywordsQueue.put(word)
+                    } else {
+                        clearInterval(interval)
+                        Log.error('Parsing completed with error', err)
+                    }
+                })
+                .finally(() => processingKeywords--)
+        }, 100)
     }
 }

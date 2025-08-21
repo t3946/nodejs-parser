@@ -11,15 +11,13 @@ const port = 3000;
 
 app.use(express.json());
 
-// Получить список ресурсов
-app.get('/', (req, res) => {
-    res.sendStatus(200);
-});
-
-app.get('/test', (req, res) => {
-    App.main([
+app.get('/parse', async (req, res) => {
+    const keywordsList = [
         'lada'
-    ])
+    ]
+
+    App.main(keywordsList)
+
     res.sendStatus(200);
 })
 
