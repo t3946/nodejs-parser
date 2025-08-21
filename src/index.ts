@@ -2,6 +2,9 @@ import {App} from "./App"
 
 
 import express from 'express';
+import * as process from "node:process";
+import {config} from "dotenv";
+import {Log} from "@/Log";
 
 const app = express();
 const port = 3000;
@@ -14,10 +17,14 @@ app.get('/', (req, res) => {
 });
 
 app.get('/test', (req, res) => {
-    App.main()
+    App.main([
+        'lada'
+    ])
     res.sendStatus(200);
 })
 
 app.listen(port, () => {
-    console.log(`REST API сервер запущен на порту ${port}`);
+    Log.info(`REST API сервер запущен на порту ${port}`)
+
+    Object.assign(process.env, config().parsed);
 });
