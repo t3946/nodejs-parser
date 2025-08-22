@@ -1,6 +1,7 @@
 import {Page} from "puppeteer";
 import {Capsola} from "@/captcha/Capsola";
 import {linkToBase64, sleep} from "@/utils";
+import {Log} from "@/Log";
 
 export class CaptchaSolver {
     private static maxAttempts: number = 3;
@@ -47,6 +48,15 @@ export class CaptchaSolver {
         const taskImgBase64 = await this.imgSrcToBase64('.TaskImage')
         const coords = await Capsola.solve(questionImgBase64, taskImgBase64)
 
+        //solve again
+        if (coords === null) {
+            if (attempt < CaptchaSolver.maxAttempts) {
+                return await this.solveCaptcha(attempt + 1)
+            }
+
+            return false
+        }
+
         const rect = await this.page.$eval(taskImgSelector, (element) => {
             const rect = element.getBoundingClientRect();
 
@@ -69,6 +79,10 @@ export class CaptchaSolver {
             this.page.click('.CaptchaButton-ProgressWrapper')
         ])
 
+        Log.info('loaded')
+
+        await sleep(1e3)
+
         if (await this.isCaptchaSolved()) {
             return true
         }
@@ -76,8 +90,11 @@ export class CaptchaSolver {
 
 
         //solve again
-        if (attempt < CaptchaSolver.maxAttempts) {
-            return await this.solveCaptcha(this.page, attempt + 1)
+        if (
+            CaptchaSolver.maxAttempts &&
+            attempt < CaptchaSolver.maxAttempts
+        ) {
+            return await this.solveCaptcha(attempt + 1)
         }
 
         return false

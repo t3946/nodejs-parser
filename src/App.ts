@@ -8,6 +8,8 @@ import {FailureParseError} from "@/exception/FailureParseError";
 type TPosition = {
     url: string
     position: number
+    title: string
+    text: string
 }
 
 export class App {
@@ -29,13 +31,51 @@ export class App {
 
         const url = new URL(baseUrl);
 
+        Object.entries(params).forEach(([key, value]) => {
+            url.searchParams.append(key, value);
+        });
+
         return url.toString();
     }
 
     private static async parsePage(page: Page, pageNumber: number): Promise<TPosition[]> {
-        Log.todo('Here is shall be page parsing')
+        const searchResultItems = await page.$$('li.serp-item:not(:has(.AdvLabel-Text)):not([data-fast-name="images"])');
 
-        return []
+        const result: TPosition[] = []
+
+        for (let i = 0; i < searchResultItems.length; i++) {
+            const item = searchResultItems[i]
+            const aNode = await item.$('a.Link');
+            const titleEl = await item.$('.OrganicTitleContentSpan');
+            const textEl = await item.$('.OrganicTextContentSpan');
+
+            if (!aNode || !titleEl || !textEl) {
+                continue
+            }
+
+
+            const linkUrl: string = (await aNode.getProperty('href')).toString()
+            const title = (await titleEl.getProperty('text')).toString()
+            const text = (await textEl.getProperty('text')).toString()
+
+            result.push({
+                url: linkUrl,
+                position: pageNumber * 10 + (i + 1),
+                title,
+                text,
+            })
+            // const title = titleEl ? await page.evaluate(el => el.textContent.trim(), titleEl) : '';
+            // const text = textEl ? await page.evaluate(el => el.textContent.trim(), textEl) : '';
+            // let urlObj = null;
+            // let domain = '';
+
+            // try {
+            //     urlObj = new URL(linkUrl);
+            //     domain = urlObj.hostname;
+            // } catch {}
+        }
+
+        return result
     }
 
     /**
@@ -68,7 +108,7 @@ export class App {
 
             if (!solved) {
                 Log.warn('Captcha not solved')
-
+                await page.close()
                 throw new FailureParseError('Failure parse')
             }
             //[end]
@@ -80,7 +120,7 @@ export class App {
             allReports.push(...pageReports)
         }
 
-        await page.close()
+        // await page.close()
 
         return allReports
     }

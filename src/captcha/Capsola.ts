@@ -56,7 +56,7 @@ export class Capsola {
         return null;
     }
 
-    public static async solve(clickImgBase64: string, taskImgBase64: string): Promise<TCoords[]> {
+    public static async solve(clickImgBase64: string, taskImgBase64: string): Promise<TCoords[] | null> {
         let taskId
 
         while (!taskId) {
@@ -64,6 +64,11 @@ export class Capsola {
         }
 
         const result = await Capsola.getResult(taskId);
+
+        if (!result) {
+            Log.system('Capsola failed solve captcha')
+            return null;
+        }
 
         let coords: TCoords[] = []
 
