@@ -27,7 +27,7 @@ export class App {
             lr: 46
         };
 
-        if (pageNumber === 1) {
+        if (pageNumber > 0) {
             params.p = pageNumber
         }
 
@@ -89,8 +89,8 @@ export class App {
         const page = await browser.newPage(proxy)
         const allReports: TPosition[] = []
 
-        for (let pageNumber = 1; pageNumber <= App.maxPage; pageNumber++) {
-            Log.system('Parse page: ' + pageNumber);
+        for (let pageNumber = 0; pageNumber < App.maxPage; pageNumber++) {
+            Log.system('Parse page: ' + (pageNumber + 1));
 
             //[start] load page
             const url = App.getPageUrl(keyword, pageNumber)
