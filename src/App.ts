@@ -12,9 +12,11 @@ type TPosition = {
     text: string
 }
 
+type TResultItem = { word: string, positions: TPosition[] }
+
 export class App {
     private static maxPage = 1
-    private static timeoutS = 2
+    private static timeoutS = 30
     private static headless: boolean = false;
 
     private static getPageUrl(keyword: string, pageNumber: number): string {
@@ -55,8 +57,8 @@ export class App {
 
 
             const linkUrl: string = (await aNode.getProperty('href')).toString()
-            const title = (await titleEl.getProperty('text')).toString()
-            const text = (await textEl.getProperty('text')).toString()
+            const title: string = (await titleEl.getProperty('textContent')).toString()
+            const text: string = (await textEl.getProperty('textContent')).toString()
 
             result.push({
                 url: linkUrl,
@@ -120,68 +122,72 @@ export class App {
             allReports.push(...pageReports)
         }
 
-        // await page.close()
+        await page.close()
 
         return allReports
     }
 
-    public static async main(keywords: string[]) {
-        Log.info('Parsing begin:')
-
-
+    public static async main(keywords: string[]): Promise<TResultItem[]> {
         //start browser
         const browser = new Browser({
             headless: App.headless,
         });
 
-        await browser.launch()
+        const resultPromise = new Promise<TResultItem[]>(async (resolve, reject) => {
+            Log.info('Parsing begin:')
 
-        const keywordsQueue = new KeywordsQueue(keywords)
-        const processingMax = 3
-        const parsed: { word: string, positions: TPosition[] }[] = []
-        let processingKeywords = 0
+            await browser.launch()
 
+            const keywordsQueue = new KeywordsQueue(keywords)
+            const processingMax = 3
+            const parsed: TResultItem[] = []
+            let processingKeywords = 0
 
-        const interval = setInterval(() => {
+            const interval = setInterval(() => {
+                const word = keywordsQueue.take()
 
-            const word = keywordsQueue.take()
+                //all parsed
+                if (parsed.length === keywords.length) {
+                    resolve(parsed)
+                    Log.info('Parsing completed!', JSON.stringify(parsed))
+                    clearInterval(interval)
+                    return parsed
+                }
 
-            //all parsed
-            if (parsed.length === keywords.length) {
-                Log.info('Parsing completed!', parsed)
-                clearInterval(interval)
-                return
-            }
+                //@ts-ignore
+                if (!browser.browser.connected) {
+                    Log.error('Browser was closed. Parsing abort.')
+                    clearInterval(interval)
+                    return
+                }
 
-            //@ts-ignore
-            if (!browser.browser.connected) {
-                Log.error('Browser was closed. Parsing abort.')
-                clearInterval(interval)
-                return
-            }
+                if (
+                    !word ||
+                    processingKeywords === processingMax
+                ) {
+                    return
+                }
 
-            if (
-                !word ||
-                processingKeywords === processingMax
-            ) {
-                return
-            }
+                processingKeywords++
 
-            processingKeywords++
+                App.parseKeyword(browser, word)
+                    .then((positions) => {
+                        parsed.push({word, positions})
+                    })
+                    .catch((err) => {
+                        if (err instanceof FailureParseError) {
+                            keywordsQueue.put(word)
+                        } else {
+                            clearInterval(interval)
+                            Log.error('Parsing completed with error', err)
+                        }
+                    })
+                    .finally(() => processingKeywords--)
+            }, 100)
+        })
 
-            App.parseKeyword(browser, word)
-                .then((positions) => {
-                    parsed.push({word, positions})
-                })
-                .catch((err) => {
-                    if (err instanceof FailureParseError) {
-                        keywordsQueue.put(word)
-                    } else {
-                        clearInterval(interval)
-                        Log.error('Parsing completed with error', err)
-                    }
-                })
-                .finally(() => processingKeywords--)
-        }, 100)
+        resultPromise.finally(() => browser.browser?.close())
+
+        return resultPromise
     }
 }

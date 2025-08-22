@@ -1,5 +1,7 @@
-import puppeteer, {Browser as PuppeteerBrowser, Page, PuppeteerLaunchOptions} from "puppeteer";
+import {Browser as PuppeteerBrowser, Page, PuppeteerLaunchOptions} from "puppeteer";
 import useProxy from "@lem0-packages/puppeteer-page-proxy";
+import puppeteer from 'puppeteer-extra'
+import StealthPlugin from 'puppeteer-extra-plugin-stealth'
 
 export class Browser {
     public browser: PuppeteerBrowser | undefined;
@@ -14,6 +16,8 @@ export class Browser {
     }
 
     async launch() {
+        puppeteer.use(StealthPlugin());
+
         this.browser = await puppeteer.launch(this.options);
     }
 
@@ -29,7 +33,7 @@ export class Browser {
         }
 
         // disable timeout
-        await page.setDefaultNavigationTimeout(2000);
+        await page.setDefaultNavigationTimeout(30e3);
 
         return page
     }

@@ -1,4 +1,4 @@
-import {Page} from "puppeteer";
+import {Page, TimeoutError} from "puppeteer";
 import {Capsola} from "@/captcha/Capsola";
 import {linkToBase64, sleep} from "@/utils";
 import {Log} from "@/Log";
@@ -30,13 +30,18 @@ export class CaptchaSolver {
     }
 
     public async solveCaptcha(attempt = 1): Promise<boolean> {
+        Log.debug('Solve Captcha')
+
         //solve checkbox captcha
         if (await this.isCheckboxCaptcha()) {
+            Log.debug('Solve checkbox captcha')
+
             await this.page.waitForSelector('#js-button')
-            await this.page.click('#js-button');
-            await this.page.waitForSelector('.AdvancedCaptcha-ImageWrapper img')
+            await this.page.click('#js-button')
 
             if (await this.isCaptchaSolved()) {
+                Log.debug('Check captcha solved');
+
                 return true
             }
         }
@@ -44,18 +49,27 @@ export class CaptchaSolver {
 
         //[start] solve smart captcha
         const taskImgSelector = '.AdvancedCaptcha-ImageWrapper img'
-        const questionImgBase64 = await this.imgSrcToBase64('.AdvancedCaptcha-ImageWrapper img')
+
+        await this.page.waitForSelector(taskImgSelector)
+        Log.debug('Solve smart captcha')
+
+        const questionImgBase64 = await this.imgSrcToBase64(taskImgSelector)
         const taskImgBase64 = await this.imgSrcToBase64('.TaskImage')
         const coords = await Capsola.solve(questionImgBase64, taskImgBase64)
 
         //solve again
         if (coords === null) {
+            Log.debug('no coords')
+
             if (attempt < CaptchaSolver.maxAttempts) {
                 return await this.solveCaptcha(attempt + 1)
             }
 
             return false
         }
+
+
+        Log.debug('Coordinates got')
 
         const rect = await this.page.$eval(taskImgSelector, (element) => {
             const rect = element.getBoundingClientRect();
@@ -66,7 +80,10 @@ export class CaptchaSolver {
             };
         });
 
+        Log.debug('Rect defined')
+
         for (const {x, y} of coords) {
+            Log.debug(`Click by coordinate ${x} ${y}`)
             const aX = rect.left + 10 + x
             const aY = rect.top + y
 
@@ -74,14 +91,33 @@ export class CaptchaSolver {
             await sleep(100);
         }
 
-        await Promise.all([
-            this.page.waitForNavigation({waitUntil: 'load'}),
-            this.page.click('.CaptchaButton-ProgressWrapper')
-        ])
+        await this.page.click('.CaptchaButton-ProgressWrapper')
 
-        Log.info('loaded')
+        try {
+            await Promise.race(
+                [
+                    this.page.waitForSelector('#search-result'),
+                    sleep(3e3)
+                ]
+            )
+        } catch (e) {
+            const error: any = e
 
-        await sleep(1e3)
+            if (e!.constructor === TimeoutError) {
+                Log.warn(`CaptchaSolver failed to load captcha: ${error.message}`)
+
+                if (
+                    !CaptchaSolver.maxAttempts ||
+                    attempt < CaptchaSolver.maxAttempts
+                ) {
+                    return await this.solveCaptcha(attempt + 1)
+                }
+            } else {
+                Log.warn('Unexpected error: ' + error.message)
+
+                return await this.solveCaptcha(attempt)
+            }
+        }
 
         if (await this.isCaptchaSolved()) {
             return true
@@ -91,7 +127,7 @@ export class CaptchaSolver {
 
         //solve again
         if (
-            CaptchaSolver.maxAttempts &&
+            !CaptchaSolver.maxAttempts ||
             attempt < CaptchaSolver.maxAttempts
         ) {
             return await this.solveCaptcha(attempt + 1)
