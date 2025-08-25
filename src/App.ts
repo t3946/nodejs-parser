@@ -45,6 +45,7 @@ export class App {
         const searchResultItems = await page.$$('li.serp-item:not(:has(.AdvLabel-Text)):not([data-fast-name="images"])');
 
         const result: TPosition[] = []
+        let position = 0
 
         for (let i = 0; i < searchResultItems.length; i++) {
             const item = searchResultItems[i]
@@ -59,10 +60,11 @@ export class App {
             const linkUrl: string = (await aNode.getProperty('href')).toString()
             const title: string = (await titleEl.getProperty('textContent')).toString()
             const text: string = (await textEl.getProperty('textContent')).toString()
+            position += 1
 
             result.push({
                 url: linkUrl,
-                position: pageNumber * 10 + (i + 1),
+                position: pageNumber * 10 + (position),
                 title,
                 text,
             })
