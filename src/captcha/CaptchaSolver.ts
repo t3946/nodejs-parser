@@ -4,6 +4,8 @@ import {linkToBase64, sleep} from "@/utils";
 import {Log} from "@/Log";
 
 export class CaptchaSolver {
+    private searchResultSelector = '#search-result'
+    private taskImgSelector = '.AdvancedCaptcha-ImageWrapper img'
     private static maxAttempts: number = 3;
     private page: Page
 
@@ -22,7 +24,7 @@ export class CaptchaSolver {
     }
 
     private async isCaptchaSolved(): Promise<boolean> {
-        return !!(await this.page.$('#search-result'))
+        return !!(await this.page.$(this.searchResultSelector))
     }
 
     private async isCheckboxCaptcha(): Promise<boolean> {
@@ -39,6 +41,13 @@ export class CaptchaSolver {
             await this.page.waitForSelector('#js-button')
             await this.page.click('#js-button')
 
+            await Promise.race(
+                [
+                    this.page.waitForSelector(this.searchResultSelector),
+                    this.page.waitForSelector(this.taskImgSelector)
+                ]
+            )
+
             if (await this.isCaptchaSolved()) {
                 Log.debug('Check captcha solved');
 
@@ -48,19 +57,14 @@ export class CaptchaSolver {
 
 
         //[start] solve smart captcha
-        const taskImgSelector = '.AdvancedCaptcha-ImageWrapper img'
-
-        await this.page.waitForSelector(taskImgSelector)
         Log.debug('Solve smart captcha')
 
-        const questionImgBase64 = await this.imgSrcToBase64(taskImgSelector)
+        const questionImgBase64 = await this.imgSrcToBase64(this.taskImgSelector)
         const taskImgBase64 = await this.imgSrcToBase64('.TaskImage')
         const coords = await Capsola.solve(questionImgBase64, taskImgBase64)
 
-        //solve again
+        //if capsola failed to solve
         if (coords === null) {
-            Log.debug('no coords')
-
             if (attempt < CaptchaSolver.maxAttempts) {
                 return await this.solveCaptcha(attempt + 1)
             }
@@ -68,27 +72,24 @@ export class CaptchaSolver {
             return false
         }
 
-
-        Log.debug('Coordinates got')
-
-        const rect = await this.page.$eval(taskImgSelector, (element) => {
-            const rect = element.getBoundingClientRect();
+        const rect = await this.page.$eval(this.taskImgSelector, (element) => {
+            const rect = element.getBoundingClientRect()
 
             return {
                 top: rect.top,
                 left: rect.left,
-            };
-        });
+            }
+        })
 
-        Log.debug('Rect defined')
+        Log.debug('Apply capsola solution')
 
         for (const {x, y} of coords) {
             Log.debug(`Click by coordinate ${x} ${y}`)
             const aX = rect.left + 10 + x
             const aY = rect.top + y
 
-            await this.page.mouse.click(aX, aY);
-            await sleep(100);
+            await this.page.mouse.click(aX, aY)
+            await sleep(100)
         }
 
         await this.page.click('.CaptchaButton-ProgressWrapper')
@@ -96,7 +97,7 @@ export class CaptchaSolver {
         try {
             await Promise.race(
                 [
-                    this.page.waitForSelector('#search-result'),
+                    this.page.waitForSelector(this.searchResultSelector),
                     sleep(3e3)
                 ]
             )
