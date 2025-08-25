@@ -55,7 +55,6 @@ export class App {
                 continue
             }
 
-
             const linkUrl: string = (await aNode.getProperty('href')).toString()
             const title: string = (await titleEl.getProperty('textContent')).toString()
             const text: string = (await textEl.getProperty('textContent')).toString()
