@@ -1,11 +1,12 @@
 import {Browser as PuppeteerBrowser, Page, PuppeteerLaunchOptions} from "puppeteer";
 import useProxy from "@lem0-packages/puppeteer-page-proxy";
-import puppeteer from 'puppeteer-extra'
+import puppeteerExtra from 'puppeteer-extra'
 import StealthPlugin from 'puppeteer-extra-plugin-stealth'
 
 export class Browser {
     public browser: PuppeteerBrowser | undefined;
     private options: PuppeteerLaunchOptions;
+    private isStealth: boolean = false;
 
     constructor(options: PuppeteerLaunchOptions = {}) {
         this.options = {
@@ -16,9 +17,11 @@ export class Browser {
     }
 
     async launch() {
-        puppeteer.use(StealthPlugin());
+        if (this.isStealth) {
+            puppeteerExtra.use(StealthPlugin());
+        }
 
-        this.browser = await puppeteer.launch(this.options);
+        this.browser = await puppeteerExtra.launch(this.options);
     }
 
     async newPage(proxy?: string): Promise<Page> {
