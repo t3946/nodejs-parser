@@ -23,12 +23,14 @@ export function getTimeDifference(date1: Date, date2: Date): { h: number; m: num
 
     const diffSeconds = Math.floor(diffMs / 1000);
     const diffMinutes = Math.floor(diffSeconds / 60);
-    const diffHours = Math.floor(diffMinutes / 60);
+    const h = Math.floor(diffMinutes / 60);
+    const m = diffMinutes % 60
+    const s = diffSeconds % 60
 
     return {
-        h: diffHours,
-        m: diffMinutes % 60,
-        s: diffSeconds % 60,
-        f: `${diffHours}ч ${diffMinutes}м ${diffSeconds}с`,
+        h: h,
+        m: m,
+        s: s,
+        f: `${h}ч ${m}м ${s}с`,
     };
 }
