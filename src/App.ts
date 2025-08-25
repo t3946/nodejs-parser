@@ -206,6 +206,7 @@ export class App {
                     .then(({reports, statistic: stat}) => {
                         statistic.captchaSolved += stat.captchaSolved
                         parsed.push({word, positions: reports})
+                        Log.info(`Parsed: ${parsed.length}/${keywords.length}`)
                     })
                     .catch((err) => {
                         if (err instanceof FailureParseError) {
