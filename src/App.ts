@@ -146,7 +146,7 @@ export class App {
                 //all parsed
                 if (parsed.length === keywords.length) {
                     resolve(parsed)
-                    Log.info('Parsing completed!', JSON.stringify(parsed))
+                    Log.info('Parsing completed!')
                     clearInterval(interval)
                     return parsed
                 }
