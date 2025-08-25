@@ -66,15 +66,6 @@ export class App {
                 title,
                 text,
             })
-            // const title = titleEl ? await page.evaluate(el => el.textContent.trim(), titleEl) : '';
-            // const text = textEl ? await page.evaluate(el => el.textContent.trim(), textEl) : '';
-            // let urlObj = null;
-            // let domain = '';
-
-            // try {
-            //     urlObj = new URL(linkUrl);
-            //     domain = urlObj.hostname;
-            // } catch {}
         }
 
         return result
