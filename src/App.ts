@@ -106,7 +106,14 @@ export class App {
                 })
 
             const captchaSolver = new CaptchaSolver(page)
-            const solved = await captchaSolver.solveCaptcha()
+
+            let solved
+
+            try {
+                solved = await captchaSolver.solveCaptcha()
+            } catch (e) {
+                solved = await captchaSolver.isCaptchaSolved()
+            }
 
             if (!solved) {
                 Log.warn('Captcha not solved')

@@ -23,7 +23,7 @@ export class CaptchaSolver {
         return linkToBase64(imgSrc);
     }
 
-    private async isCaptchaSolved(): Promise<boolean> {
+    public async isCaptchaSolved(): Promise<boolean> {
         return !!(await this.page.$(this.searchResultSelector))
     }
 
