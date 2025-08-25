@@ -34,7 +34,7 @@ app.get('/parse', async (req, res) => {
     const keywordsList = content.split('\n').slice(0, kwNumber)
     const result = await App.main(keywordsList)
 
-    fs.writeFileSync('dist/result.json', JSON.stringify(result, null, 4), 'utf8');
+    fs.writeFileSync(`dist/${kwNumber} words/result.json`, JSON.stringify(result, null, 4), 'utf8');
 })
 
 app.listen(port, () => {
