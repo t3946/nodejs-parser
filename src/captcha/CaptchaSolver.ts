@@ -8,6 +8,8 @@ export class CaptchaSolver {
     private taskImgSelector = '.AdvancedCaptcha-ImageWrapper img'
     private static maxAttempts: number = 3;
     private page: Page
+    public totalSolved: number = 0;
+    public smartCaptchaSolved: number = 0;
 
     constructor(page: Page) {
         this.page = page;
@@ -31,8 +33,8 @@ export class CaptchaSolver {
         return !!(await this.page.$('.CheckboxCaptcha-Anchor'))
     }
 
-    public async solveCaptcha(attempt = 1): Promise<boolean> {
-        Log.debug('Solve Captcha')
+    public async solveCaptcha(attempt = 1): Promise<{ status: boolean; }> {
+        this.totalSolved += 1
 
         //solve checkbox captcha
         if (await this.isCheckboxCaptcha()) {
@@ -51,7 +53,7 @@ export class CaptchaSolver {
             if (await this.isCaptchaSolved()) {
                 Log.debug('Check captcha solved');
 
-                return true
+                return {status: true}
             }
         }
 
@@ -62,6 +64,7 @@ export class CaptchaSolver {
         const questionImgBase64 = await this.imgSrcToBase64(this.taskImgSelector)
         const taskImgBase64 = await this.imgSrcToBase64('.TaskImage')
         const coords = await Capsola.solve(questionImgBase64, taskImgBase64)
+        this.smartCaptchaSolved += 1
 
         //if capsola failed to solve
         if (coords === null) {
@@ -69,7 +72,7 @@ export class CaptchaSolver {
                 return await this.solveCaptcha(attempt + 1)
             }
 
-            return false
+            return {status: false}
         }
 
         const rect = await this.page.$eval(this.taskImgSelector, (element) => {
@@ -121,7 +124,7 @@ export class CaptchaSolver {
         }
 
         if (await this.isCaptchaSolved()) {
-            return true
+            return {status: true}
         }
         //[end]
 
@@ -134,6 +137,6 @@ export class CaptchaSolver {
             return await this.solveCaptcha(attempt + 1)
         }
 
-        return false
+        return {status: false}
     }
 }

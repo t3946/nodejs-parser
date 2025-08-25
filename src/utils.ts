@@ -10,7 +10,7 @@ export const sleep = (timeMS: number) => new Promise(resolve => setTimeout(resol
 
 export async function linkToBase64(url: string): Promise<string> {
     const response = await axios.get(url, {
-        responseType: 'arraybuffer'
+        responseType: 'arraybuffer',
     });
 
     const base64 = Buffer.from(response.data, 'binary').toString('base64');
@@ -18,7 +18,7 @@ export async function linkToBase64(url: string): Promise<string> {
     return base64;
 }
 
-export async function getTimeDifference(date1: Date, date2: Date) {
+export function getTimeDifference(date1: Date, date2: Date): { h: number; m: number; s: number; f: string } {
     const diffMs = Math.abs(date2.getTime() - date1.getTime()); // разница в миллисекундах
 
     const diffSeconds = Math.floor(diffMs / 1000);
@@ -26,8 +26,9 @@ export async function getTimeDifference(date1: Date, date2: Date) {
     const diffHours = Math.floor(diffMinutes / 60);
 
     return {
-        hours: diffHours,
-        minutes: diffMinutes % 60,
-        seconds: diffSeconds % 60
+        h: diffHours,
+        m: diffMinutes % 60,
+        s: diffSeconds % 60,
+        f: `${diffHours}ч ${diffMinutes}м ${diffSeconds}с`,
     };
 }

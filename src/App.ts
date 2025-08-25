@@ -4,7 +4,7 @@ import {CaptchaSolver} from "@/captcha/CaptchaSolver";
 import {KeywordsQueue} from "@/KeywordsQueue";
 import {Log} from "@/Log";
 import {FailureParseError} from "@/exception/FailureParseError";
-import {sleep} from '@/utils'
+import {getTimeDifference, sleep} from '@/utils'
 
 type TPosition = {
     url: string
@@ -16,7 +16,7 @@ type TPosition = {
 type TResultItem = { word: string, positions: TPosition[] }
 
 export class App {
-    private static maxPage = 1
+    private static parseDeep = 1
     private static timeoutS = 30
     private static headless: boolean = false;
 
@@ -76,13 +76,16 @@ export class App {
     /**
      * @throws Error
      */
-    private static async parseKeyword(browser: Browser, keyword: string, proxy?: string): Promise<TPosition[]> {
+    private static async parseKeyword(browser: Browser, keyword: string, proxy?: string): Promise<{ reports: TPosition[], statistic: Record<any, any> }> {
         Log.info('Parse keyword: ' + keyword);
 
         const page = await browser.newPage(proxy)
         const allReports: TPosition[] = []
+        const statistic = {
+            captchaSolved: 0
+        }
 
-        for (let pageNumber = 0; pageNumber < App.maxPage; pageNumber++) {
+        for (let pageNumber = 0; pageNumber < App.parseDeep; pageNumber++) {
             Log.system('Parse page: ' + (pageNumber + 1));
 
             //[start] load page
@@ -95,7 +98,7 @@ export class App {
                 })
                 .catch(async () => {
                     await page.close()
-                    throw new FailureParseError('Failure parse')
+                    throw new FailureParseError(`Can not go to page: ${url}`)
                 })
 
             const captchaSolver = new CaptchaSolver(page)
@@ -103,7 +106,9 @@ export class App {
             let solved
 
             try {
-                solved = await captchaSolver.solveCaptcha()
+                const result = await captchaSolver.solveCaptcha()
+                solved = result.status
+                statistic.captchaSolved += captchaSolver.smartCaptchaSolved
             } catch (e) {
                 solved = await captchaSolver.isCaptchaSolved()
             }
@@ -126,7 +131,7 @@ export class App {
 
         await page.close()
 
-        return allReports
+        return {reports: allReports, statistic}
     }
 
     public static async main(keywords: string[]): Promise<{result: TResultItem[], statistic: Record<any, any>}> {
@@ -134,10 +139,14 @@ export class App {
         const browser = new Browser({
             headless: App.headless,
         });
-        const statistic = {}
+        const statistic: any = {
+            words: keywords.length,
+            captchaSolved: 0,
+        }
 
         const resultPromise = new Promise<{result: TResultItem[], statistic: Record<any, any>}>(async (resolve, reject) => {
             Log.info('Parsing begin:')
+            const beginDate = new Date();
 
             await browser.launch()
 
@@ -151,6 +160,9 @@ export class App {
 
                 //all parsed
                 if (parsed.length === keywords.length) {
+                    const endDate = new Date();
+
+                    statistic.timePassed = getTimeDifference(beginDate, endDate).f
                     resolve({result: parsed, statistic})
                     Log.info('Parsing completed!')
                     clearInterval(interval)
@@ -174,8 +186,9 @@ export class App {
                 processingKeywords++
 
                 App.parseKeyword(browser, word)
-                    .then((positions) => {
-                        parsed.push({word, positions})
+                    .then(({reports, statistic: stat}) => {
+                        statistic.captchaSolved += stat.captchaSolved
+                        parsed.push({word, positions: reports})
                     })
                     .catch((err) => {
                         if (err instanceof FailureParseError) {
