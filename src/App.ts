@@ -1,5 +1,5 @@
 import {Browser} from "./Browser";
-import {Page} from "puppeteer";
+import {ElementHandle, Page} from "puppeteer";
 import {CaptchaSolver} from "@/captcha/CaptchaSolver";
 import {KeywordsQueue} from "@/KeywordsQueue";
 import {Log} from "@/Log";
@@ -43,7 +43,11 @@ export class App {
     }
 
     private static async parsePage(page: Page, pageNumber: number): Promise<TPosition[]> {
-        const searchResultItems = await page.$$('li.serp-item:not(:has(.AdvLabel-Text)):not([data-fast-name="images"])');
+        let searchResultItems: ElementHandle<any>[] = await page.$$('li.serp-item:not(:has(.AdvLabel-Text)):not([data-fast-name="images"])');
+
+        if (searchResultItems.length === 0) {
+            searchResultItems = await page.$$('#search-result li .Organic');
+        }
 
         const result: TPosition[] = []
         let position = 0
