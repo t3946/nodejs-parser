@@ -26,7 +26,7 @@ export class App {
         const params: Record<any, any> = {
             text: keyword,
             search_source: 'dzen_desktop_safe',
-            lr: 46
+            lr: 46,
         };
 
         if (pageNumber > 0) {
@@ -77,13 +77,16 @@ export class App {
     /**
      * @throws Error
      */
-    private static async parseKeyword(browser: Browser, keyword: string, proxy?: string): Promise<{ reports: TPosition[], statistic: Record<any, any> }> {
+    private static async parseKeyword(browser: Browser, keyword: string, proxy?: string): Promise<{
+        reports: TPosition[],
+        statistic: Record<any, any>
+    }> {
         Log.info('Parse keyword: ' + keyword);
 
         const page = await browser.newPage(proxy)
         const allReports: TPosition[] = []
         const statistic = {
-            captchaSolved: 0
+            captchaSolved: 0,
         }
 
         for (let pageNumber = 0; pageNumber < App.parseDeep; pageNumber++) {
@@ -135,7 +138,7 @@ export class App {
         return {reports: allReports, statistic}
     }
 
-    public static async main(keywords: string[]): Promise<{result: TResultItem[], statistic: Record<any, any>}> {
+    public static async main(keywords: string[]): Promise<{ result: TResultItem[], statistic: Record<any, any> }> {
         //start browser
         const browser = new Browser({
             headless: App.headless,
@@ -145,7 +148,10 @@ export class App {
             captchaSolved: 0,
         }
 
-        const resultPromise = new Promise<{result: TResultItem[], statistic: Record<any, any>}>(async (resolve, reject) => {
+        const resultPromise = new Promise<{
+            result: TResultItem[],
+            statistic: Record<any, any>
+        }>(async (resolve, reject) => {
             Log.info('Parsing begin:')
             const beginDate = new Date();
 
@@ -157,8 +163,6 @@ export class App {
             let processingKeywords = 0
 
             const interval = setInterval(() => {
-                const word = keywordsQueue.take()
-
                 //all parsed
                 if (parsed.length === keywords.length) {
                     const endDate = new Date();
@@ -177,10 +181,13 @@ export class App {
                     return
                 }
 
-                if (
-                    !word ||
-                    processingKeywords === processingMax
-                ) {
+                if (processingKeywords === processingMax) {
+                    return
+                }
+
+                const word = keywordsQueue.take()
+
+                if (!word) {
                     return
                 }
 
