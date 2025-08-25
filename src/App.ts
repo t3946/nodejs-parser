@@ -150,7 +150,7 @@ export class App {
     public static async main(keywords: string[]): Promise<{ result: TResultItem[], statistic: Record<any, any> }> {
         //start browser
         const browser = new Browser({
-            headless: App.headless,
+            headless: App.headless ? 'new' : false,
         });
         //@ts-ignore
         const processingMax = parseInt(process.env.PROCESSING_MAX)

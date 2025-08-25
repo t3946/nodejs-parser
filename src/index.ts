@@ -17,7 +17,7 @@ app.get('/test-proxy', async (req, res) => {
     res.sendStatus(200);
     await Proxy.loadProxyList()
     Log.debug('Test proxy')
-    const proxy = await Proxy.select()
+    const proxy = await Proxy.select(3)
     Log.info('Proxy:', proxy)
 })
 

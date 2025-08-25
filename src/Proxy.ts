@@ -16,12 +16,17 @@ export class Proxy {
 
     //select N fast proxies checking it one by one
     public static async select(needProxiesNumber = 1) {
-        const browser = await puppeteer.launch();
-        const page = await browser.newPage()
+        Log.debug(`Select ${needProxiesNumber} proxies`)
+
+        const browser = await puppeteer.launch({
+            ignoreHTTPSErrors: true,
+            headless: appConfig.browser.headless ? 'new' : false,
+        });
         const proxiesFound = []
 
         while (proxiesFound.length < needProxiesNumber) {
             const proxy = Proxy.list[Proxy.index]
+            const page = await browser.newPage()
 
             await useProxy(page, `http://${proxy}`)
 
@@ -34,13 +39,15 @@ export class Proxy {
                     Log.warn(`Slow proxy ${proxy}`)
                     Proxy.index += 1
                     continue
+                } else {
+                    Log.error('какая то другая ошибка', e)
                 }
+            } finally {
             }
 
             proxiesFound.push(proxy)
+            Log.debug(`Proxies found ${proxiesFound.length}/${needProxiesNumber}`)
         }
-
-        await browser.close()
 
         return proxiesFound.slice(0, needProxiesNumber)
     }

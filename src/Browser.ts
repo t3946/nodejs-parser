@@ -12,7 +12,7 @@ export class Browser {
     constructor(options: PuppeteerLaunchOptions = {}) {
         this.options = {
             ignoreHTTPSErrors: true,
-            headless: appConfig.browser.headless,
+            headless: appConfig.browser.headless ? 'new' : false,
             ...options,
         }
     }
