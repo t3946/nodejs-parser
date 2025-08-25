@@ -38,8 +38,8 @@ app.get('/parse', async (req, res) => {
 })
 
 app.listen(port, () => {
-    Log.setLogLevel(LogLevelEnum.DEBUG);
     Log.info(`REST API сервер запущен на порту ${port}`)
 
     Object.assign(process.env, config().parsed);
+    Log.setLogLevel(process.env.LOG_LEVEL);
 });
