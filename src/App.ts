@@ -90,7 +90,7 @@ export class App {
         }
 
         for (let pageNumber = 0; pageNumber < App.parseDeep; pageNumber++) {
-            Log.system('Parse page: ' + (pageNumber + 1));
+            Log.info('Parse page: ' + (pageNumber + 1));
 
             //[start] load page
             const url = App.getPageUrl(keyword, pageNumber)
@@ -107,12 +107,15 @@ export class App {
 
             const captchaSolver = new CaptchaSolver(page)
 
-            let solved
+            let solved = await captchaSolver.isCaptchaSolved()
 
             try {
-                const result = await captchaSolver.solveCaptcha()
-                solved = result.status
-                statistic.captchaSolved += captchaSolver.smartCaptchaSolved
+                if (!solved) {
+                    const result = await captchaSolver.solveCaptcha()
+
+                    solved = result.status
+                    statistic.captchaSolved += captchaSolver.smartCaptchaSolved
+                }
             } catch (e) {
                 solved = await captchaSolver.isCaptchaSolved()
             }
@@ -143,9 +146,12 @@ export class App {
         const browser = new Browser({
             headless: App.headless,
         });
+        //@ts-ignore
+        const processingMax = parseInt(process.env.PROCESSING_MAX)
         const statistic: any = {
             words: keywords.length,
             captchaSolved: 0,
+            processingMax: processingMax
         }
 
         const resultPromise = new Promise<{
@@ -158,7 +164,6 @@ export class App {
             await browser.launch()
 
             const keywordsQueue = new KeywordsQueue(keywords)
-            const processingMax = parseInt(process.env.PROCESSING_MAX)
             const parsed: TResultItem[] = []
             let processingKeywords = 0
 
