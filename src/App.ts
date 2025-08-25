@@ -4,6 +4,7 @@ import {CaptchaSolver} from "@/captcha/CaptchaSolver";
 import {KeywordsQueue} from "@/KeywordsQueue";
 import {Log} from "@/Log";
 import {FailureParseError} from "@/exception/FailureParseError";
+import {sleep} from '@/utils'
 
 type TPosition = {
     url: string
@@ -114,6 +115,8 @@ export class App {
 
 
             //parse loaded results
+            await sleep(1000)
+
             const pageReports = await App.parsePage(page, pageNumber)
 
             allReports.push(...pageReports)
