@@ -1,10 +1,8 @@
 import {App} from "./App"
-
-
 import express from 'express';
 import * as process from "node:process";
 import {config} from "dotenv";
-import {Log, LogLevelEnum} from "@/Log";
+import {Log} from "@/Log";
 import {fsReadFile} from 'ts-loader/dist/utils'
 import * as fs from 'node:fs'
 

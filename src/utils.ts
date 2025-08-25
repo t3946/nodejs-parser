@@ -17,3 +17,17 @@ export async function linkToBase64(url: string): Promise<string> {
 
     return base64;
 }
+
+export async function getTimeDifference(date1: Date, date2: Date) {
+    const diffMs = Math.abs(date2.getTime() - date1.getTime()); // разница в миллисекундах
+
+    const diffSeconds = Math.floor(diffMs / 1000);
+    const diffMinutes = Math.floor(diffSeconds / 60);
+    const diffHours = Math.floor(diffMinutes / 60);
+
+    return {
+        hours: diffHours,
+        minutes: diffMinutes % 60,
+        seconds: diffSeconds % 60
+    };
+}
