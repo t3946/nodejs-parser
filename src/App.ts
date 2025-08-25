@@ -129,13 +129,14 @@ export class App {
         return allReports
     }
 
-    public static async main(keywords: string[]): Promise<TResultItem[]> {
+    public static async main(keywords: string[]): Promise<{result: TResultItem[], statistic: Record<any, any>}> {
         //start browser
         const browser = new Browser({
             headless: App.headless,
         });
+        const statistic = {}
 
-        const resultPromise = new Promise<TResultItem[]>(async (resolve, reject) => {
+        const resultPromise = new Promise<{result: TResultItem[], statistic: Record<any, any>}>(async (resolve, reject) => {
             Log.info('Parsing begin:')
 
             await browser.launch()
@@ -150,7 +151,7 @@ export class App {
 
                 //all parsed
                 if (parsed.length === keywords.length) {
-                    resolve(parsed)
+                    resolve({result: parsed, statistic})
                     Log.info('Parsing completed!')
                     clearInterval(interval)
                     return parsed

@@ -32,14 +32,19 @@ app.get('/parse', async (req, res) => {
     res.sendStatus(200);
 
     const keywordsList = content.split('\n').slice(0, kwNumber)
-    const result = await App.main(keywordsList)
+    const {result, statistic} = await App.main(keywordsList)
+    const dir = `dist/${kwNumber} words`
 
-    fs.writeFileSync(`dist/${kwNumber} words/result.json`, JSON.stringify(result, null, 4), 'utf8');
+    fs.mkdir(dir, { recursive: true }, (err) => {
+        fs.writeFileSync(`${dir}/result.json`, JSON.stringify(result, null, 4), 'utf8');
+        fs.writeFileSync(`${dir}/statistic.json`, JSON.stringify(statistic, null, 4), 'utf8');
+    })
 })
 
 app.listen(port, () => {
     Log.info(`REST API сервер запущен на порту ${port}`)
 
     Object.assign(process.env, config().parsed);
+    //@ts-ignore
     Log.setLogLevel(process.env.LOG_LEVEL);
 });
