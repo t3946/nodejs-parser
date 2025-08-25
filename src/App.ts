@@ -7,6 +7,7 @@ import {FailureParseError} from "@/exception/FailureParseError";
 import {getTimeDifference, sleep} from '@/utils'
 import * as process from 'node:process'
 import {appConfig} from '@/config/app'
+import {Proxy} from '@/Proxy'
 
 type TPosition = {
     url: string
@@ -172,7 +173,7 @@ export class App {
             const parsed: TResultItem[] = []
             let processingKeywords = 0
 
-            const interval = setInterval(() => {
+            const interval = setInterval(async () => {
                 //all parsed
                 if (parsed.length === keywords.length) {
                     const endDate = new Date();
@@ -203,7 +204,13 @@ export class App {
 
                 processingKeywords++
 
-                App.parseKeyword(browser, word)
+                let proxy
+
+                if (appConfig.proxy.useProxy) {
+                    proxy = await Proxy.select()
+                }
+
+                App.parseKeyword(browser, word, proxy)
                     .then(({reports, statistic: stat}) => {
                         statistic.captchaSolved += stat.captchaSolved
                         parsed.push({word, positions: reports})

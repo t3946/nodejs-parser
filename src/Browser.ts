@@ -19,25 +19,24 @@ export class Browser {
 
     async launch() {
         if (this.isStealth) {
-            puppeteerExtra.use(StealthPlugin());
+            puppeteerExtra.use(StealthPlugin())
         }
 
-        this.browser = await puppeteerExtra.launch(this.options);
+        this.browser = await puppeteerExtra.launch(this.options)
     }
 
     async newPage(proxy?: string): Promise<Page> {
         if (!this.browser) {
-            throw new Error("Browser does not ready");
+            throw new Error("Browser does not ready")
         }
 
-        const page = await this.browser.newPage();
+        const page = await this.browser.newPage()
 
         if (proxy) {
             await useProxy(page, `http://${proxy}`)
         }
 
-        // disable timeout
-        await page.setDefaultNavigationTimeout(30e3);
+        page.setDefaultNavigationTimeout(30e3)
 
         return page
     }

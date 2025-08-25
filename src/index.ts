@@ -5,11 +5,21 @@ import {config} from "dotenv";
 import {Log} from "@/Log";
 import {fsReadFile} from 'ts-loader/dist/utils'
 import * as fs from 'node:fs'
+import {appConfig} from '@/config/app'
+import {Proxy} from '@/Proxy'
 
 const app = express();
 const port = 3000;
 
 app.use(express.json());
+
+app.get('/test-proxy', async (req, res) => {
+    res.sendStatus(200);
+    await Proxy.loadProxyList()
+    Log.debug('Test proxy')
+    const proxy = await Proxy.select()
+    Log.info('Proxy:', proxy)
+})
 
 app.get('/parse', async (req, res) => {
     //@ts-ignore
@@ -29,6 +39,10 @@ app.get('/parse', async (req, res) => {
 
     res.sendStatus(200);
 
+    if (appConfig.proxy.useProxy) {
+        await Proxy.loadProxyList()
+    }
+
     const keywordsList = content.split('\n').slice(0, kwNumber)
     const {result, statistic} = await App.main(keywordsList)
     const dir = `dist/${kwNumber} words/${process.env.PROCESSING_MAX} processing`
@@ -44,5 +58,5 @@ app.listen(port, () => {
 
     Object.assign(process.env, config().parsed);
     //@ts-ignore
-    Log.setLogLevel(process.env.LOG_LEVEL);
+    Log.setLogLevel(appConfig.logLevel);
 });
