@@ -6,6 +6,7 @@ import {Log} from "@/Log";
 import {FailureParseError} from "@/exception/FailureParseError";
 import {getTimeDifference, sleep} from '@/utils'
 import * as process from 'node:process'
+import {appConfig} from '@/config/app'
 
 type TPosition = {
     url: string
@@ -17,9 +18,9 @@ type TPosition = {
 type TResultItem = { word: string, positions: TPosition[] }
 
 export class App {
-    private static parseDeep = 1
+    private static parseDeep = appConfig.parse.deep
     private static timeoutS = 30
-    private static headless: boolean = false;
+    private static headless: boolean = appConfig.browser.headless;
 
     private static getPageUrl(keyword: string, pageNumber: number): string {
         const baseUrl = 'https://yandex.ru/search/';

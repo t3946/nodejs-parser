@@ -2,16 +2,17 @@ import {Browser as PuppeteerBrowser, Page, PuppeteerLaunchOptions} from "puppete
 import useProxy from "@lem0-packages/puppeteer-page-proxy";
 import puppeteerExtra from 'puppeteer-extra'
 import StealthPlugin from 'puppeteer-extra-plugin-stealth'
+import {appConfig} from '@/config/app'
 
 export class Browser {
     public browser: PuppeteerBrowser | undefined;
     private options: PuppeteerLaunchOptions;
-    private isStealth: boolean = false;
+    private isStealth: boolean = true;
 
     constructor(options: PuppeteerLaunchOptions = {}) {
         this.options = {
             ignoreHTTPSErrors: true,
-            headless: true,
+            headless: appConfig.browser.headless,
             ...options,
         }
     }
