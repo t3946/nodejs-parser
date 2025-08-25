@@ -5,6 +5,7 @@ import {KeywordsQueue} from "@/KeywordsQueue";
 import {Log} from "@/Log";
 import {FailureParseError} from "@/exception/FailureParseError";
 import {getTimeDifference, sleep} from '@/utils'
+import * as process from 'node:process'
 
 type TPosition = {
     url: string
@@ -151,7 +152,7 @@ export class App {
             await browser.launch()
 
             const keywordsQueue = new KeywordsQueue(keywords)
-            const processingMax = 3
+            const processingMax = parseInt(process.env.PROCESSING_MAX)
             const parsed: TResultItem[] = []
             let processingKeywords = 0
 
