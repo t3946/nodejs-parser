@@ -1,5 +1,5 @@
 export class Stack<Item> {
-    private readonly queue: Item[];
+    protected readonly queue: Item[];
     private index: number;
 
     constructor(items: Item[]) {
@@ -25,5 +25,9 @@ export class Stack<Item> {
 
     public put(item: Item): void {
         this.queue.unshift(item);
+    }
+
+    public removeByIndex(index: number): void {
+        this.queue.splice(index, 1);
     }
 }

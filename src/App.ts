@@ -7,6 +7,7 @@ import {FailureParseError} from "@/exception/FailureParseError";
 import {getTimeDifference, sleep} from '@/utils'
 import {appConfig} from '@/config/app'
 import {Proxy} from '@/Proxy'
+import {ProxiesStack} from '@/stack/ProxiesStack'
 
 type TPosition = {
     url: string
@@ -20,7 +21,7 @@ type TResultItem = { word: string, positions: TPosition[] }
 export class App {
     private static parseDeep = appConfig.parse.deep
     private static headless: boolean = appConfig.browser.headless;
-    private static proxies: string[] = []
+    private static proxies: ProxiesStack
 
     private static getPageUrl(keyword: string, pageNumber: number): string {
         const baseUrl = 'https://yandex.ru/search/';
@@ -155,7 +156,15 @@ export class App {
         const statistic: any = {
             words: keywords.length,
             captchaSolved: 0,
-            processingMax: appConfig.parse.processingMax
+            processingMax: appConfig.parse.processingMax,
+        }
+
+        if (appConfig.proxy.useProxy) {
+            const proxies = (await Proxy.select(appConfig.parse.processingMax))
+                .map(proxy => {
+                    return {proxy, isUsing: false}
+                })
+            this.proxies = new ProxiesStack(proxies)
         }
 
         const resultPromise = new Promise<{
@@ -202,10 +211,12 @@ export class App {
 
                 processingKeywords++
 
-                let proxy
+                let proxy: string | undefined
 
                 if (appConfig.proxy.useProxy) {
-                    proxy = (await Proxy.select())[0]
+                    proxy = this.proxies.getNextFree().proxy
+                    Log.debug(`GetNext Proxy ${proxy}`)
+                    this.proxies.setUsing(proxy, true)
                 }
 
                 App.parseKeyword(browser, word, proxy)
@@ -214,15 +225,29 @@ export class App {
                         parsed.push({word, positions: reports})
                         Log.info(`Parsed: ${parsed.length}/${keywords.length}`)
                     })
-                    .catch((err) => {
+                    .catch(async (err) => {
                         if (err instanceof FailureParseError) {
                             keywordsQueue.put(word)
+
+                            //replace proxy
+                            if (proxy) {
+                                const newProxy = (await Proxy.select())
+                                    .map(proxy => {
+                                        return {proxy, isUsing: false}
+                                    })[0]
+
+                                this.proxies.remove(proxy)
+                                this.proxies.put(newProxy)
+                            }
                         } else {
                             clearInterval(interval)
                             Log.error('Parsing completed with error', err)
                         }
                     })
-                    .finally(() => processingKeywords--)
+                    .finally(() => {
+                        proxy && this.proxies.setUsing(proxy, false)
+                        processingKeywords--
+                    })
             }, 100)
         })
 
