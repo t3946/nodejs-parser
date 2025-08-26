@@ -61,6 +61,10 @@ export class Capsola {
 
         while (!taskId) {
             taskId = await Capsola.createTask(clickImgBase64, taskImgBase64)
+
+            if (!taskId) {
+                Log.warn("Capsola not returned task id (Did you specified api key?)");
+            }
         }
 
         const result = await Capsola.getResult(taskId);
