@@ -41,10 +41,11 @@ export class Proxy {
             } catch (e) {
                 if (e!.constructor === TimeoutError) {
                     Log.warn(`Slow proxy ${proxy}`)
-                    continue
                 } else {
-                    Log.error('какая то другая ошибка', e)
+                    Log.warn('Check proxy error: ', e)
                 }
+
+                continue
             } finally {
                 Proxy.index += 1
             }
