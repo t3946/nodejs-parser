@@ -50,9 +50,8 @@ export class Proxy {
                 Proxy.index += 1
             }
 
-            Log.info(`Fast Proxy found (${proxy}), total: ${proxiesFound.length}/${needProxiesNumber}`)
             proxiesFound.push(proxy)
-            Log.debug(`Proxies found (${proxiesFound.length}/${needProxiesNumber}): ${proxy}`)
+            Log.info(`Proxies found (${proxiesFound.length}/${needProxiesNumber}): ${proxy}`)
         }
 
         await this.browser.close()
