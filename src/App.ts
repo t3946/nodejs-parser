@@ -5,7 +5,6 @@ import {KeywordsQueue} from "@/KeywordsQueue";
 import {Log} from "@/Log";
 import {FailureParseError} from "@/exception/FailureParseError";
 import {getTimeDifference, sleep} from '@/utils'
-import * as process from 'node:process'
 import {appConfig} from '@/config/app'
 import {Proxy} from '@/Proxy'
 
@@ -20,7 +19,6 @@ type TResultItem = { word: string, positions: TPosition[] }
 
 export class App {
     private static parseDeep = appConfig.parse.deep
-    private static timeoutS = 30
     private static headless: boolean = appConfig.browser.headless;
 
     private static getPageUrl(keyword: string, pageNumber: number): string {
@@ -103,7 +101,7 @@ export class App {
 
             await page
                 .goto(url, {
-                    timeout: 1000 * App.timeoutS,
+                    timeout: appConfig.parse.loadPageTimeoutMS,
                     waitUntil: 'load',
                 })
                 .catch(async () => {
@@ -153,11 +151,10 @@ export class App {
             headless: App.headless ? 'new' : false,
         });
         //@ts-ignore
-        const processingMax = parseInt(process.env.PROCESSING_MAX)
         const statistic: any = {
             words: keywords.length,
             captchaSolved: 0,
-            processingMax: processingMax
+            processingMax: appConfig.parse.processingMax
         }
 
         const resultPromise = new Promise<{
@@ -192,7 +189,7 @@ export class App {
                     return
                 }
 
-                if (processingKeywords === processingMax) {
+                if (processingKeywords === appConfig.parse.processingMax) {
                     return
                 }
 
@@ -207,7 +204,7 @@ export class App {
                 let proxy
 
                 if (appConfig.proxy.useProxy) {
-                    proxy = await Proxy.select()
+                    proxy = (await Proxy.select())[0]
                 }
 
                 App.parseKeyword(browser, word, proxy)

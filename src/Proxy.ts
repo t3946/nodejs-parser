@@ -1,4 +1,4 @@
-import puppeteer, {TimeoutError} from 'puppeteer'
+import puppeteer, {TimeoutError, Browser} from 'puppeteer'
 import useProxy from '@lem0-packages/puppeteer-page-proxy'
 import {Log} from '@/Log'
 import {appConfig} from '@/config/app'
@@ -6,6 +6,7 @@ import {appConfig} from '@/config/app'
 export class Proxy {
     private static list: string[]
     private static index: number
+    private static browser: Browser | null = null
 
     public static async loadProxyList() {
         const resp = await fetch("https://api.proxytraff.com/package/get?c=K5hk");
@@ -18,15 +19,18 @@ export class Proxy {
     public static async select(needProxiesNumber = 1) {
         Log.debug(`Select ${needProxiesNumber} proxies`)
 
-        const browser = await puppeteer.launch({
-            ignoreHTTPSErrors: true,
-            headless: appConfig.browser.headless ? 'new' : false,
-        });
+        if (!this.browser) {
+            this.browser = await puppeteer.launch({
+                ignoreHTTPSErrors: true,
+                headless: appConfig.proxyBrowser.headless ? 'new' : false,
+            });
+        }
+
         const proxiesFound = []
 
         while (proxiesFound.length < needProxiesNumber) {
             const proxy = Proxy.list[Proxy.index]
-            const page = await browser.newPage()
+            const page = await this.browser.newPage()
 
             await useProxy(page, `http://${proxy}`)
 
@@ -49,6 +53,10 @@ export class Proxy {
             Log.debug(`Proxies found ${proxiesFound.length}/${needProxiesNumber}`)
         }
 
+        await this.browser.close()
+        this.browser = null
+
         return proxiesFound.slice(0, needProxiesNumber)
     }
 }
+

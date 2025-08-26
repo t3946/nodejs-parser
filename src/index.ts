@@ -45,7 +45,7 @@ app.get('/parse', async (req, res) => {
 
     const keywordsList = content.split('\n').slice(0, kwNumber)
     const {result, statistic} = await App.main(keywordsList)
-    const dir = `dist/${kwNumber} words/${process.env.PROCESSING_MAX} processing`
+    const dir = `dist/${kwNumber} words/${appConfig.parse.processingMax} processing`
 
     fs.mkdir(dir, { recursive: true }, (err) => {
         fs.writeFileSync(`${dir}/result.json`, JSON.stringify(result, null, 4), 'utf8');
