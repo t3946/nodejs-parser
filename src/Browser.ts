@@ -14,6 +14,7 @@ export class Browser {
             ignoreHTTPSErrors: true,
             headless: appConfig.browser.headless ? 'new' : false,
             ...options,
+            args: ['--disable-background-timer-throttling']
         }
     }
 

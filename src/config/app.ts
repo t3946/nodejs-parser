@@ -4,7 +4,7 @@ export const appConfig = {
     logLevel: LogLevelEnum.INFO,
     parse: {
         deep: 1,
-        processingMax: 1,
+        processingMax: 6,
         loadPageTimeoutMS: 60 * 1000,
     },
     proxy: {

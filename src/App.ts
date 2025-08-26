@@ -171,7 +171,7 @@ export class App {
             result: TResultItem[],
             statistic: Record<any, any>
         }>(async (resolve, reject) => {
-            Log.info('Parsing begin:')
+            Log.info(`Parsing begin (${keywords.length} keywords, ${appConfig.parse.processingMax} max pages):`)
             const beginDate = new Date();
 
             await browser.launch()
@@ -215,7 +215,6 @@ export class App {
 
                 if (appConfig.proxy.useProxy) {
                     proxy = this.proxies.getNextFree().proxy
-                    Log.debug(`GetNext Proxy ${proxy}`)
                     this.proxies.setUsing(proxy, true)
                 }
 
@@ -245,7 +244,10 @@ export class App {
                         }
                     })
                     .finally(() => {
-                        proxy && this.proxies.setUsing(proxy, false)
+                        if (proxy) {
+                            this.proxies.setUsing(proxy, false)
+                        }
+
                         processingKeywords--
                     })
             }, 100)

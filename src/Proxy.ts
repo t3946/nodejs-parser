@@ -41,16 +41,16 @@ export class Proxy {
             } catch (e) {
                 if (e!.constructor === TimeoutError) {
                     Log.warn(`Slow proxy ${proxy}`)
-                    Proxy.index += 1
                     continue
                 } else {
                     Log.error('какая то другая ошибка', e)
                 }
             } finally {
+                Proxy.index += 1
             }
 
             proxiesFound.push(proxy)
-            Log.debug(`Proxies found ${proxiesFound.length}/${needProxiesNumber}`)
+            Log.debug(`Proxies found (${proxiesFound.length}/${needProxiesNumber}): ${proxy}`)
         }
 
         await this.browser.close()
