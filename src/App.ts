@@ -1,7 +1,7 @@
 import {Browser} from "./Browser";
 import {ElementHandle, Page} from "puppeteer";
 import {CaptchaSolver} from "@/captcha/CaptchaSolver";
-import {KeywordsQueue} from "@/KeywordsQueue";
+import {KeywordsStack} from "@/stack/KeywordsStack";
 import {Log} from "@/Log";
 import {FailureParseError} from "@/exception/FailureParseError";
 import {getTimeDifference, sleep} from '@/utils'
@@ -20,6 +20,7 @@ type TResultItem = { word: string, positions: TPosition[] }
 export class App {
     private static parseDeep = appConfig.parse.deep
     private static headless: boolean = appConfig.browser.headless;
+    private static proxies: string[] = []
 
     private static getPageUrl(keyword: string, pageNumber: number): string {
         const baseUrl = 'https://yandex.ru/search/';
@@ -166,7 +167,7 @@ export class App {
 
             await browser.launch()
 
-            const keywordsQueue = new KeywordsQueue(keywords)
+            const keywordsQueue = new KeywordsStack(keywords)
             const parsed: TResultItem[] = []
             let processingKeywords = 0
 
