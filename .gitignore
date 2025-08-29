@@ -3,3 +3,4 @@ dist
 node_modules
 notes
 .env
+static-proxy-list.txt

@@ -2,16 +2,28 @@ import puppeteer, {TimeoutError, Browser} from 'puppeteer'
 import useProxy from '@lem0-packages/puppeteer-page-proxy'
 import {Log} from '@/Log'
 import {appConfig} from '@/config/app'
+import {fsReadFile} from 'ts-loader/dist/utils'
 
 export class Proxy {
     private static list: string[]
     private static index: number
     private static browser: Browser | null = null
 
-    public static async loadProxyList() {
+    public static async loadResidentialProxy(): Promise<void> {
         const resp = await fetch("https://api.proxytraff.com/package/get?c=K5hk");
 
         Proxy.list = (await resp.text()).split('\n');
+        Proxy.index = 0
+    }
+
+    public static async loadProxy(): void {
+        const text = fsReadFile('static-proxy-list.txt')
+
+        if (text === undefined) {
+            throw new Error('No static proxy list found.')
+        }
+
+        Proxy.list = text.split('\n');
         Proxy.index = 0
     }
 

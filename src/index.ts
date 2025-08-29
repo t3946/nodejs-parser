@@ -5,7 +5,7 @@ import {config} from "dotenv";
 import {Log} from "@/Log";
 import {fsReadFile} from 'ts-loader/dist/utils'
 import * as fs from 'node:fs'
-import {appConfig} from '@/config/app'
+import {appConfig, ProxySource} from '@/config/app'
 import {Proxy} from '@/Proxy'
 
 const app = express();
@@ -40,21 +40,29 @@ app.get('/parse', async (req, res) => {
     res.sendStatus(200);
 
     if (appConfig.proxy.useProxy) {
-        await Proxy.loadProxyList()
+        switch (appConfig.proxy.source) {
+            case ProxySource.classic:
+                Proxy.loadProxy()
+                break
+
+            case ProxySource.residential:
+                await Proxy.loadResidentialProxy()
+                break
+        }
     }
 
     const keywordsList = content.split('\n').slice(0, kwNumber)
     const {result, statistic} = await App.main(keywordsList)
     const dir = `dist/${kwNumber} words/${appConfig.parse.processingMax} processing`
 
-    fs.mkdir(dir, { recursive: true }, (err) => {
+    fs.mkdir(dir, {recursive: true}, (err) => {
         fs.writeFileSync(`${dir}/result.json`, JSON.stringify(result, null, 4), 'utf8');
         fs.writeFileSync(`${dir}/statistic.json`, JSON.stringify(statistic, null, 4), 'utf8');
     })
 })
 
 app.listen(port, () => {
-    Log.info(`REST API сервер запущен на порту ${port}`)
+    Log.info(`Server started on: http://localhost:${port}`)
 
     Object.assign(process.env, config().parsed);
     //@ts-ignore
