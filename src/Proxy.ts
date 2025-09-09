@@ -10,7 +10,7 @@ export class Proxy {
     private static browser: Browser | null = null
 
     public static async loadResidentialProxy(): Promise<void> {
-        const resp = await fetch("https://api.proxytraff.com/package/get?c=K5hk");
+        const resp = await fetch(appConfig.proxy.residentialProxyLink);
 
         Proxy.list = (await resp.text()).split('\n');
         Proxy.index = 0

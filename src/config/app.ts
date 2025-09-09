@@ -15,7 +15,8 @@ export const appConfig = {
     proxy: {
         useProxy: true,
         maxProxyResponseTimeMS: 3e3,
-        source: ProxySource.classic
+        source: ProxySource.classic,
+        residentialProxyLink: "https://api.proxytraff.com/package/get?c=K5hk"
     },
     proxyBrowser: {
         headless: false,
